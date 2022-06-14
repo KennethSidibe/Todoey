@@ -10,7 +10,7 @@ import Foundation
 
 struct K {
     
-    static let CellIdentifier = "ToDoItemCell"
-    static let CategoryCellIdentifier = "CategoryCell"
+    static let CellIdentifier = "Cell"
+    static let CategoryCellIdentifier = "Cell"
     static let itemSegueIdentifer = "goToItems"
 }

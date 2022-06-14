@@ -8,8 +8,9 @@
 
 import UIKit
 import RealmSwift
+import ChameleonFramework
 
-class CategoryViewController: UITableViewController {
+class CategoryViewController: SwipeTableViewController {
     
     var categories:Results<Category>?
     
@@ -22,6 +23,10 @@ class CategoryViewController: UITableViewController {
         super.viewDidLoad()
         
         loadCategories()
+        
+        tableView.separatorStyle = .none
+        
+        tableView.rowHeight = 80
     }
     
     // MARK: - Tableview DataSource Method
@@ -29,8 +34,8 @@ class CategoryViewController: UITableViewController {
     //    Cette methode retourne le nombre de cellules a generer
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         
-//        Nil coalescing operator
-//        if property is not nil return property, else return ?? "int"
+        //        Nil coalescing operator
+        //        if property is not nil return property, else return ?? "int"
         return categories?.count ?? 1
     }
     
@@ -40,9 +45,9 @@ class CategoryViewController: UITableViewController {
     }
     
     func loadCategories() {
-
+        
         categories = realm.objects(Category.self)
-
+        
         tableView.reloadData()
     }
     
@@ -92,16 +97,17 @@ class CategoryViewController: UITableViewController {
         present(alert, animated: true)
     }
     
-    
     //    Cette fonction est chargee de load chaque item contenu dans notre array de depart et retourne chaque cell. Elle est aussi appelle a chaque appel de la fonction tableView.reloadData()
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
         let category = categories?[indexPath.row]
         
-        let cell = tableView.dequeueReusableCell(withIdentifier: K.CategoryCellIdentifier, for: indexPath)
+        let cell = super.tableView(tableView, cellForRowAt: indexPath)
         
         cell.textLabel?.text = category?.name ?? "no categories added yet"
+        
+        cell.backgroundColor = UIColor.randomFlat()
         
         return cell
     }
@@ -116,10 +122,23 @@ class CategoryViewController: UITableViewController {
         }
     }
     
-    //MARK: - Tableview Manipulation Method
+    //MARK: - Delete category swipe gesture
     
-    
-    
-    
+    override func updateModel(at indexPath: IndexPath) {
+        if let categoryToDelete = self.categories?[indexPath.row] {
+            
+            do {
+                try self.realm.write({
+                    
+                    self.realm.delete(categoryToDelete)
+                    
+                })
+            } catch {
+                print("Error while deleting category with swipe, \(error)")
+            }
+        }
+    }
     
 }
+
+

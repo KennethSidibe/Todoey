@@ -8,8 +8,9 @@
 
 import UIKit
 import RealmSwift
+import SwiftUI
 
-class TodoListViewController: UITableViewController {
+class TodoListViewController: SwipeTableViewController {
     
     var todoItems:Results<Item>?
     
@@ -23,7 +24,7 @@ class TodoListViewController: UITableViewController {
         }
     }
     
-    let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Items.plist")
+//    let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Items.plist")
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -41,7 +42,7 @@ class TodoListViewController: UITableViewController {
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
-        let cell = tableView.dequeueReusableCell(withIdentifier: K.CellIdentifier, for: indexPath)
+        let cell = super.tableView(tableView, cellForRowAt: indexPath)
         
         if let item = todoItems?[indexPath.row] {
             
@@ -69,17 +70,16 @@ class TodoListViewController: UITableViewController {
         if let item = todoItems?[indexPath.row] {
             
             do {
-                //        Save data in persistent container
+                //Save data in persistent container
                 
                 try realm.write({
                     
-//                    Assign the inverse of the done property to the done property of the current object
+                    //Assign the inverse of the done property to the done property of the current object
                     
                     item.done = !item.done
-
                     
-//                    to delete
-//                    realm.delete(item)
+                    //to delete
+                    //realm.delete(item)
                 })
             } catch {
                 print("Error updating the data, \(error)")
@@ -87,8 +87,6 @@ class TodoListViewController: UITableViewController {
         }
         
         tableView.reloadData()
-        
-        
         
     }
     
@@ -155,6 +153,20 @@ class TodoListViewController: UITableViewController {
         
         tableView.reloadData()
         
+    }
+    
+    //MARK: - Delete ToDo Item
+    
+    override func updateModel(at indexPath: IndexPath) {
+        if let itemToDelete = todoItems?[indexPath.row] {
+            do {
+                try realm.write({
+                    realm.delete(itemToDelete)
+                })
+            } catch {
+                print("Error while deleting todo item, \(error)")
+            }
+        }
     }
 }
 
