@@ -7,15 +7,16 @@
 //
 
 import UIKit
-import CoreData
+import RealmSwift
 
 class CategoryViewController: UITableViewController {
     
-    var categoryArray = [Category]()
+    var categories:Results<Category>?
+    
     //    C'est le context un etat intermediaire entre la base de donnees et les donnees sauvegarde actuellement dans nos variables
     //    Elle se trouve dans notre AppDelegate code c'est pour ca qu'on downcast le delegate qu'on obtient a partir du singleton UIApplication.shared
     
-    let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
+    let realm = try! Realm()
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -27,7 +28,10 @@ class CategoryViewController: UITableViewController {
     
     //    Cette methode retourne le nombre de cellules a generer
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return categoryArray.count
+        
+//        Nil coalescing operator
+//        if property is not nil return property, else return ?? "int"
+        return categories?.count ?? 1
     }
     
     //    Ici on gere ce que un clique sur une cellule fais
@@ -35,29 +39,18 @@ class CategoryViewController: UITableViewController {
         performSegue(withIdentifier: K.itemSegueIdentifer, sender: self)
     }
     
-    func loadCategories(with request:NSFetchRequest<Category> = Category.fetchRequest()) {
-        
-        //        The sort descriptor is used to sort the array of data that will be loaded from our db. The property "key" is the "attribute" from the db that will be fetch to sort the data
-        
-        let sortDescriptor = NSSortDescriptor(key: "name", ascending: true)
-        request.sortDescriptors = [sortDescriptor]
-        
-        do {
-            //            Here we fetch from the context which is an intermediate state between the database and the data hold in the current controller
-            
-            categoryArray = try context.fetch(request)
-            
-        } catch {
-            print("Error while loading data from db, \(error)")
-        }
-        
+    func loadCategories() {
+
+        categories = realm.objects(Category.self)
+
         tableView.reloadData()
     }
     
-    func saveData() {
-        
+    func save(category: Category) {
         do {
-            try context.save()
+            try realm.write({
+                realm.add(category)
+            })
         } catch {
             print("Error while saving the data, \(error)")
         }
@@ -79,11 +72,10 @@ class CategoryViewController: UITableViewController {
         //        On crée ensuite l'action a faire lorsque l'on finis l'alerte ou on appuie entrer
         let action = UIAlertAction(title: "Add item", style: .default) { action in
             
-            let newCategory = Category(context: self.context)
-            newCategory.name = textField.text
-            self.categoryArray.append(newCategory)
+            let newCategory = Category()
+            newCategory.name = textField.text!
             
-            self.saveData()
+            self.save(category: newCategory)
             
         }
         
@@ -105,11 +97,11 @@ class CategoryViewController: UITableViewController {
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
-        let category = categoryArray[indexPath.row]
+        let category = categories?[indexPath.row]
         
         let cell = tableView.dequeueReusableCell(withIdentifier: K.CategoryCellIdentifier, for: indexPath)
         
-        cell.textLabel?.text = category.name
+        cell.textLabel?.text = category?.name ?? "no categories added yet"
         
         return cell
     }
@@ -120,7 +112,7 @@ class CategoryViewController: UITableViewController {
         let destinationViewController = segue.destination as! TodoListViewController
         
         if let indexPath = tableView.indexPathForSelectedRow {
-            destinationViewController.selectedCategory = categoryArray[indexPath.row]
+            destinationViewController.selectedCategory = categories?[indexPath.row]
         }
     }
     
